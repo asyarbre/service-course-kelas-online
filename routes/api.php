@@ -16,4 +16,4 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::post('mentors', [MentorController::class, 'create']);
-
+Route::put('mentors/{id}', [MentorController::class, 'update']);
