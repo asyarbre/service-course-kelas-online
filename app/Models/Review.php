@@ -9,6 +9,11 @@ class Review extends Model
 {
     protected $table = 'reviews';
 
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:m:s',
+        'updated_at' => 'datetime:Y-m-d H:m:s',
+    ];
+
     protected $fillable = [
         'course_id',
         'user_id',
@@ -18,6 +23,6 @@ class Review extends Model
 
     public function course()
     {
-        return $this->belongsTo('App\Course');
+        return $this->belongsTo('App\Models\Course');
     }
 }
