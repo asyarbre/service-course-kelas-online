@@ -110,4 +110,24 @@ class ReviewController extends Controller
             'data' => $review,
         ]);
     }
+
+    public function destroy($id)
+    {
+        // find review by id
+        $review = Review::find($id);
+        if (!$review) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'review not found',
+            ], 404);
+        }
+
+        // delete review
+        $review->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'review deleted',
+        ]);
+    }
 }
