@@ -14,7 +14,7 @@ class ReviewController extends Controller
         $rules = [
             'user_id' => 'required|integer',
             'course_id' => 'required|integer',
-            'rating' => 'required|integer',
+            'rating' => 'required|integer|min:1|max:5',
             'note' => 'required|string',
         ];
 
@@ -67,6 +67,44 @@ class ReviewController extends Controller
 
         // create review
         $review = Review::create($data);
+        return response()->json([
+            'status' => 'success',
+            'data' => $review,
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $rules = [
+            'rating' => 'integer|min:1|max:5',
+            'note' => 'string',
+        ];
+
+        $data = $request->except('user_id', 'course_id');
+
+        $validator = Validator::make($data, $rules);
+
+        // If validation fails, return error response
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors(),
+            ], 400);
+        }
+
+        // find review by id
+        $review = Review::find($id);
+        if (!$review) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'review not found',
+            ], 404);
+        }
+
+        // update review
+        $review->fill($data);
+        $review->save();
+
         return response()->json([
             'status' => 'success',
             'data' => $review,
