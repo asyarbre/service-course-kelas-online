@@ -6,11 +6,13 @@ use App\Models\Course;
 use App\Models\Mentor;
 use App\Models\MyCourse;
 use App\Models\Review;
+use App\Models\Chapter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class CourseController extends Controller
 {
+    
     public function index(Request $request)
     {
         $courses = Course::query();
@@ -37,26 +39,51 @@ class CourseController extends Controller
 
     public function show($id)
     {
-        $course = Course::find($id);
+        $course = Course::with('chapters.lessons')
+        ->with('mentor')
+        ->with('images')
+        ->find($id);
 
-        // If course not found, return error response
         if (!$course) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Course not found',
-            ], 404);
+                'message' => 'course not found'
+            ]);
         }
 
-        // get review and total student
-        $reviews = Review::where('course_id', "=", $id)->get()->toArray();
-        $totalStudent = MyCourse::where('course_id', "=", $id)->count();
+        $reviews = Review::where('course_id', '=', $id)->get()->toArray();
+        if (count($reviews) > 0) {
+            // get array column user_id from reviews
+            $userIds = array_column($reviews, 'user_id');
+            $users = getUserByIds($userIds);
+            // echo "<pre>".print_r($users, 1)."</pre>";
 
+            // check if status is error return empty array
+            if ($users['status'] === 'error'){
+                $reviews = [];
+
+            // if status is success, merge users data to reviews
+            } else {
+                foreach ($reviews as $key => $review){
+                    // get index of user_id from users array
+                    $userIndex = array_search($review['user_id'], array_column($users['data'], 'id'));
+                    // merge users data to reviews
+                    $reviews[$key]['users'] = $users['data'][$userIndex];
+                }
+            }
+        }
+
+        $totalStudent = MyCourse::where('course_id', '=', $id)->count();
+        $totalVideos = Chapter::where('course_id', '=', $id)->withCount('lessons')->get()->toArray();
+        $finalTotalVideos = array_sum(array_column($totalVideos, 'lessons_count'));
+        
         $course['reviews'] = $reviews;
+        $course['total_videos'] = $finalTotalVideos;
         $course['total_student'] = $totalStudent;
 
         return response()->json([
             'status' => 'success',
-            'data' => $course,
+            'data' => $course
         ]);
     }
 
